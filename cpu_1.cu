@@ -119,7 +119,7 @@ int main()
         elapsed_time = timing(h_A, h_B, h_C);
         total_time += elapsed_time;
     }
-    printf("Time = %.3f ms\n", total_time / REPEATS);
+    printf("Time: %.3f ms\n", total_time / REPEATS);
 
     printf("Check: %s\n", check(h_A, h_B, h_C) ? "OK" : "Failed");
 
