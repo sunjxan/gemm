@@ -27,6 +27,24 @@ do                                                    \
         printf("    File:       %s\n", __FILE__);     \
         printf("    Line:       %d\n", __LINE__);     \
         printf("    Error code: %d\n", status);       \
+        printf("    Error text: %s\n",                \
+            cublasGetStatusString(status));           \
+        exit(1);                                      \
+    }                                                 \
+} while (0)
+
+#define CHECK_CUTLASS(call)                           \
+do                                                    \
+{                                                     \
+    const cutlass::Status status = (call);            \
+    if (status != cutlass::Status::kSuccess)          \
+    {                                                 \
+        printf("CUBLAS Error:\n");                    \
+        printf("    File:       %s\n", __FILE__);     \
+        printf("    Line:       %d\n", __LINE__);     \
+        printf("    Error code: %d\n", int(status));  \
+        printf("    Error text: %s\n",                \
+            cutlassGetStatusString(status));          \
         exit(1);                                      \
     }                                                 \
 } while (0)
