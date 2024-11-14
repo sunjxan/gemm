@@ -2,6 +2,8 @@
 #include <cmath>
 #include "error.cuh"
 
+#define DIVUP(m, n) ((m + n - 1) / n)
+
 const unsigned SKIP = 5, REPEATS = 5;
 const size_t M = 5120, N = 4096, K = 4096;
 const size_t real_size = sizeof(real);
@@ -42,7 +44,7 @@ bool check(const real *A, const real *B, const real *C) {
     cudaMemset(d_C, 0, MN_size);
 
     dim3 block_size(32, 32);
-    dim3 grid_size((M + block_size.x - 1) / block_size.x, (N + block_size.y - 1) / block_size.y);
+    dim3 grid_size(DIVUP(M, block_size.x), DIVUP(N, block_size.y));
     check_kernel<<<grid_size, block_size>>>(d_A, d_B, d_C);
     CHECK(cudaGetLastError());
     CHECK(cudaDeviceSynchronize());
@@ -84,7 +86,7 @@ __global__ void kernel(const real *A, const real *B, real *C)
 void gemm(const real *d_A, const real *d_B, real *d_C)
 {
     dim3 block_size(32, 32);
-    dim3 grid_size((M + block_size.x - 1) / block_size.x, (N + block_size.y - 1) / block_size.y);
+    dim3 grid_size(DIVUP(M, block_size.x), DIVUP(N, block_size.y));
     kernel<<<grid_size, block_size>>>(d_A, d_B, d_C);
     CHECK(cudaGetLastError());
     CHECK(cudaDeviceSynchronize());
