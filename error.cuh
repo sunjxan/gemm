@@ -19,8 +19,8 @@ do                                                    \
 
 #ifdef USE_DP
     typedef double real;
-    const real EPSILON = 1e-15;
+    const real EPSILON = 1e-12;
 #else
     typedef float real;
-    const real EPSILON = 1e-6f;
+    const real EPSILON = 1e-3f;
 #endif
