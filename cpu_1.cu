@@ -3,7 +3,7 @@
 #include "error.cuh"
 
 const unsigned SKIP = 5, REPEATS = 5;
-const size_t M = 1024, N = 1024, K = 1024;
+const size_t M = 5120, N = 4096, K = 4096;
 const size_t real_size = sizeof(real);
 const size_t MK = M * N, KN = K * N, MN = M * N;
 const size_t MK_size = MK * real_size, KN_size = KN * real_size, MN_size = MN * real_size;
