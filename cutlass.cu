@@ -97,11 +97,11 @@ real timing(const real *d_A, const real *d_B, real *d_C)
     cudaEvent_t start, stop;
     CHECK(cudaEventCreate(&start));
     CHECK(cudaEventCreate(&stop));
-    CHECK(cudaEventRecord(start));
+    CHECK(cudaEventRecord(start, 0));
 
     gemm(d_A, d_B, d_C);
 
-    CHECK(cudaEventRecord(stop));
+    CHECK(cudaEventRecord(stop, 0));
     CHECK(cudaEventSynchronize(stop));
     CHECK(cudaEventElapsedTime(&elapsed_time, start, stop));
     CHECK(cudaEventDestroy(start));
