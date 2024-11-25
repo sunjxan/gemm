@@ -49,6 +49,8 @@ do                                                    \
     }                                                 \
 } while (0)
 
+#define DIVUP(m, n) ((m + n - 1) / n)
+
 #ifdef USE_DP
     typedef double real;
     const real EPSILON = 1e-12;
