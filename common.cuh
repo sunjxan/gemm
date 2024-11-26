@@ -5,12 +5,12 @@
 #include "error.cuh"
 
 const unsigned SKIP = 5, REPEATS = 5;
-const size_t M = 5120, N = 4096, K = 4096;
+const size_t M = 2048, N = 2048, K = 2048;
 const size_t real_size = sizeof(real);
 const size_t MK = M * N, KN = K * N, MN = M * N;
 const size_t MK_size = MK * real_size, KN_size = KN * real_size, MN_size = MN * real_size;
 
-void gemm(const real *d_A, const real *d_B, real *d_C);
+void gemm(const real *, const real *, real *);
 
 void random_init(real *data, const size_t size)
 {
@@ -43,7 +43,6 @@ bool check(const real *A, const real *B, const real *C) {
 
     CHECK(cudaMemcpy(d_A, A, MK_size, cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(d_B, B, KN_size, cudaMemcpyHostToDevice));
-    CHECK(cudaMemset(d_C, 0, MN_size));
 
     dim3 block_size(32, 32);
     dim3 grid_size(DIVUP(M, block_size.x), DIVUP(N, block_size.y));
@@ -71,17 +70,15 @@ bool check(const real *A, const real *B, const real *C) {
     return true;
 }
 
-real timing(const real *d_A, const real *d_B, real *d_C)
+real timing(const real *A, const real *B, real *C)
 {
-    CHECK(cudaMemset(d_C, 0, MN_size));
-
     float elapsed_time = 0;
     cudaEvent_t start, stop;
     CHECK(cudaEventCreate(&start));
     CHECK(cudaEventCreate(&stop));
     CHECK(cudaEventRecord(start, 0));
 
-    gemm(d_A, d_B, d_C);
+    gemm(A, B, C);
 
     CHECK(cudaEventRecord(stop, 0));
     CHECK(cudaEventSynchronize(stop));
