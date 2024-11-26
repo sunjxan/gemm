@@ -21,14 +21,14 @@ void random_init(real *data, const size_t size)
 
 __global__ void check_kernel(const real *A, const real *B, real *C)
 {
-    unsigned ix = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned iy = blockIdx.y * blockDim.y + threadIdx.y;
-    if (ix < M && iy < N) {
+    unsigned ix = blockIdx.x * blockDim.x + threadIdx.x;
+    if (iy < M && ix < N) {
         real sum = 0;
         for (size_t t = 0; t < K; ++t) {
-            sum += A[ix * K + t] * B[t * N + iy];
+            sum += A[iy * K + t] * B[t * N + ix];
         }
-        C[ix * N + iy] = sum;
+        C[iy * N + ix] = sum;
     }
 }
 
@@ -47,6 +47,7 @@ bool check(const real *A, const real *B, const real *C) {
     dim3 block_size(32, 32);
     dim3 grid_size(DIVUP(M, block_size.x), DIVUP(N, block_size.y));
     check_kernel<<<grid_size, block_size>>>(d_A, d_B, d_C);
+    CHECK(cudaGetLastError());
     CHECK(cudaDeviceSynchronize());
 
     CHECK(cudaMemcpy(h_C, d_C, MN_size, cudaMemcpyDeviceToHost));
