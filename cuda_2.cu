@@ -34,6 +34,9 @@ __global__ void kernel(const real *A, const real *B, real *C, size_t unit, size_
         __syncthreads();
         if (iy < M && ix < N) {
             for (size_t j = 0; j < unit; ++j) {
+                if (i * unit + j >= K) {
+                    break;
+                }
                 C[pos] += s_a[ty * unit + j] * s_b[j * unit + tx];
             }
         }
