@@ -5,14 +5,14 @@
 
 __global__ void kernel(const real *A, const real *B, real *C)
 {
-    unsigned ix = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned iy = blockIdx.y * blockDim.y + threadIdx.y;
-    if (ix < M && iy < N) {
+    unsigned ix = blockIdx.x * blockDim.x + threadIdx.x;
+    if (iy < M && ix < N) {
         real sum = 0;
         for (size_t t = 0; t < K; ++t) {
-            sum += A[ix * K + t] * B[t * N + iy];
+            sum += A[iy * K + t] * B[t * N + ix];
         }
-        C[ix * N + iy] = sum;
+        C[iy * N + ix] = sum;
     }
 }
 
