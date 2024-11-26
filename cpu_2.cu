@@ -4,6 +4,8 @@
 
 void gemm(const real *h_A, const real *h_B, real *h_C)
 {
+    CHECK(cudaMemset(h_C, 0, MN_size));
+
     for (size_t t = 0; t < K; ++t) {
         for (size_t i = 0; i < M; ++i) {
             for (size_t j = 0; j < N; ++j) {
