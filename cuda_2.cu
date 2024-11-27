@@ -13,7 +13,7 @@ __global__ void kernel(const real *A, const real *B, real *C, size_t unit, size_
     real *s_b = s_a + unit_size;
     unsigned iy = blockIdx.y * blockDim.y + threadIdx.y, tx = threadIdx.x;
     unsigned ix = blockIdx.x * blockDim.x + threadIdx.x, ty = threadIdx.y;
-    size_t pos = iy * N + ix;
+    real sum = 0.0f;
 
     for (size_t i = 0; i < DIVUP(K, unit); ++i) {
         size_t col_a = tx + i * unit, row_b = ty + i * unit;
@@ -37,16 +37,18 @@ __global__ void kernel(const real *A, const real *B, real *C, size_t unit, size_
                 if (i * unit + j >= K) {
                     break;
                 }
-                C[pos] += s_a[ty * unit + j] * s_b[j * unit + tx];
+                sum += s_a[ty * unit + j] * s_b[j * unit + tx];
             }
         }
+    }
+
+    if (iy < M && ix < N) {
+        C[iy * N + ix] = sum;
     }
 }
 
 void gemm(const real *d_A, const real *d_B, real *d_C)
 {
-    CHECK(cudaMemset(d_C, 0, MN_size));
-
     unsigned length = 32;
     dim3 block_size(length, length);
     dim3 grid_size(DIVUP(M, length), DIVUP(N, length));

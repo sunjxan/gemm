@@ -8,7 +8,7 @@ __global__ void kernel(const real *A, const real *B, real *C)
     unsigned iy = blockIdx.y * blockDim.y + threadIdx.y;
     unsigned ix = blockIdx.x * blockDim.x + threadIdx.x;
     if (iy < M && ix < N) {
-        real sum = 0;
+        real sum = 0.0f;
         for (size_t t = 0; t < K; ++t) {
             sum += A[iy * K + t] * B[t * N + ix];
         }
