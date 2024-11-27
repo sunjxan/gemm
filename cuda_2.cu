@@ -17,6 +17,7 @@ __global__ void kernel(const real *A, const real *B, real *C, size_t unit, size_
 
     for (size_t i = 0; i < DIVUP(K, unit); ++i) {
         size_t col_a = tx + i * unit, row_b = ty + i * unit;
+        // 安培之前的架构，从全局内存转移到共享内存需要经过寄存器，并做块同步
         real a = 0, b = 0;
         if (iy < M && col_a < K) {
             a = A[iy * K + col_a];

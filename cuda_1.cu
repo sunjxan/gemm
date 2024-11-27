@@ -3,6 +3,8 @@
 #include "error.cuh"
 #include "common.cuh"
 
+// 朴素实现，注意iy和ix对行列的编码
+
 __global__ void kernel(const real *A, const real *B, real *C)
 {
     unsigned iy = blockIdx.y * blockDim.y + threadIdx.y;
