@@ -48,7 +48,6 @@ bool check(const real *A, const real *B, const real *C) {
     dim3 grid_size(DIVUP(M, block_size.x), DIVUP(N, block_size.y));
     check_kernel<<<grid_size, block_size>>>(d_A, d_B, d_C);
     CHECK(cudaGetLastError());
-    CHECK(cudaDeviceSynchronize());
 
     CHECK(cudaMemcpy(h_C, d_C, MN_size, cudaMemcpyDeviceToHost));
 

@@ -22,7 +22,6 @@ void gemm(const real *d_A, const real *d_B, real *d_C)
     dim3 grid_size(DIVUP(M, block_size.x), DIVUP(N, block_size.y));
     kernel<<<grid_size, block_size>>>(d_A, d_B, d_C);
     CHECK(cudaGetLastError());
-    CHECK(cudaDeviceSynchronize());
 }
 
 int main()

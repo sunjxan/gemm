@@ -54,7 +54,6 @@ void gemm(const real *d_A, const real *d_B, real *d_C)
     size_t unit = length, unit_size = unit * length, shared_size = (unit_size * real_size) << 1;
     kernel<<<grid_size, block_size, shared_size>>>(d_A, d_B, d_C, unit, unit_size);
     CHECK(cudaGetLastError());
-    CHECK(cudaDeviceSynchronize());
 }
 
 int main()
