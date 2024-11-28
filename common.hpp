@@ -5,7 +5,7 @@
 #include "error.h"
 
 const unsigned SKIP = 5, REPEATS = 5;
-const size_t M = 512, N = 256, K = 128;
+const size_t M = 5120, N = 2048, K = 4096;
 const size_t real_size = sizeof(real);
 const size_t MK = M * K, KN = K * N, MN = M * N;
 const size_t MK_size = MK * real_size, KN_size = KN * real_size, MN_size = MN * real_size;
@@ -25,7 +25,7 @@ __global__ void check_kernel(const real (*A)[K], const real (*B)[N], real (*C)[N
     unsigned ix = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (iy < M && ix < N) {
-        real sum = 0;
+        real sum = 0.0f;
         for (size_t t = 0; t < K; ++t) {
             sum += A[iy][t] * B[t][ix];
         }
@@ -50,7 +50,8 @@ bool check(const real *A, const real *B, const real *C) {
     real (*d_nC)[N] = reinterpret_cast<decltype(d_nC)>(d_C);
 
     dim3 block_size(32, 32);
-    dim3 grid_size(DIVUP(M, block_size.x), DIVUP(N, block_size.y));
+    // N是列对应x，M是行对应y
+    dim3 grid_size(DIVUP(N, block_size.x), DIVUP(M, block_size.y));
     check_kernel<<<grid_size, block_size>>>(d_nA, d_nB, d_nC);
     CHECK(cudaGetLastError());
 

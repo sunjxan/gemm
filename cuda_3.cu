@@ -73,7 +73,8 @@ void gemm(const real *A, const real *B, real *C)
 
     // 线程块是正方形
     dim3 block_size(block_dim, block_dim);
-    dim3 grid_size(M / block_shape, N / block_shape);
+    // N是列对应x，M是行对应y
+    dim3 grid_size(N / block_shape, M / block_shape);
     kernel<<<grid_size, block_size>>>(nA, nB, nC);
     CHECK(cudaGetLastError());
 }
