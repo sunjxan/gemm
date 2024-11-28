@@ -2,14 +2,15 @@
 
 #include "common.hpp"
 
-// 一个线程完成4X4个线程的工作
+// 1. 使用寄存器缓存线程负责的子矩阵的计算数据，为达到最高使用效率，子矩阵应是正方形
+// 2. 寄存器数量有限，从共享内存加载到寄存器计算的过程，应在K轴上分段进行
 
 // block_shape应能整除M、K、N，block_unit应能整除K
 constexpr size_t block_shape = 32, block_unit = 16;
 // thread_shape应能整除block_shape和block_unit
 constexpr size_t thread_shape = 4, block_dim = block_shape / thread_shape;
 // thread_unit应能整除block_unit
-constexpr size_t thread_unit = 2, frag_size = block_unit / block_dim;
+constexpr size_t thread_unit = 1, frag_size = block_unit / block_dim;
 
 __device__ void kernel_thread(const real (*A)[block_unit], const real (*B)[block_shape], real (*C)[thread_shape])
 {
