@@ -19,16 +19,16 @@ void random_init(real *data, const size_t size)
     }
 }
 
-__global__ void check_kernel(const real *A, const real *B, real *C)
+__global__ void check_kernel(const real (*A)[K], const real (*B)[N], real (*C)[K])
 {
     unsigned iy = blockIdx.y * blockDim.y + threadIdx.y;
     unsigned ix = blockIdx.x * blockDim.x + threadIdx.x;
     if (iy < M && ix < N) {
         real sum = 0;
         for (size_t t = 0; t < K; ++t) {
-            sum += A[iy * K + t] * B[t * N + ix];
+            sum += A[iy][t] * B[t][ix];
         }
-        C[iy * N + ix] = sum;
+        C[iy][ix] = sum;
     }
 }
 
@@ -44,9 +44,13 @@ bool check(const real *A, const real *B, const real *C) {
     CHECK(cudaMemcpy(d_A, A, MK_size, cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(d_B, B, KN_size, cudaMemcpyHostToDevice));
 
+    const real (*d_nA)[K] = reinterpret_cast<decltype(d_nA)>(d_A);
+    const real (*d_nB)[N] = reinterpret_cast<decltype(d_nB)>(d_B);
+    real (*d_nC)[N] = reinterpret_cast<decltype(d_nC)>(d_C);
+
     dim3 block_size(32, 32);
     dim3 grid_size(DIVUP(M, block_size.x), DIVUP(N, block_size.y));
-    check_kernel<<<grid_size, block_size>>>(d_A, d_B, d_C);
+    check_kernel<<<grid_size, block_size>>>(d_nA, d_nB, d_nC);
     CHECK(cudaGetLastError());
 
     CHECK(cudaMemcpy(h_C, d_C, MN_size, cudaMemcpyDeviceToHost));
@@ -57,8 +61,8 @@ bool check(const real *A, const real *B, const real *C) {
 
     for (size_t i = 0; i < M; ++i) {
         for (size_t j = 0; j < N; ++j) {
-            real sum = h_C[i * N + j];
-            real v = C[i * N + j];
+            size_t pos = i * N + j;
+            real sum = h_C[pos], v = C[pos];
             if (std::fabs(sum - v) > EPSILON) {
                 printf("C[%u][%u] not match, %.15f vs %.15f\n", unsigned(i), unsigned(j), sum, v);
                 CHECK(cudaFreeHost(h_C));
@@ -95,8 +99,8 @@ void launch_cpu()
     CHECK(cudaMallocHost(&h_B, KN_size));
     CHECK(cudaMallocHost(&h_C, MN_size));
 
-    random_init(h_A, M * K);
-    random_init(h_B, K * N);
+    random_init(h_A, MK);
+    random_init(h_B, KN);
 
     float elapsed_time = 0, total_time = 0;
     for (unsigned i = 0; i < SKIP; ++i) {
@@ -122,8 +126,8 @@ void launch_gpu()
     CHECK(cudaMallocHost(&h_B, KN_size));
     CHECK(cudaMallocHost(&h_C, MN_size));
 
-    random_init(h_A, M * K);
-    random_init(h_B, K * N);
+    random_init(h_A, MK);
+    random_init(h_B, KN);
 
     real *d_A, *d_B, *d_C;
     CHECK(cudaMalloc(&d_A, MK_size));
