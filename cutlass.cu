@@ -1,6 +1,6 @@
 #include <cstdio>
 
-#include "common.cuh"
+#include "common.hpp"
 #include "cutlass/gemm/device/gemm.h"
 
 void gemm(const real *A, const real *B, real *C)

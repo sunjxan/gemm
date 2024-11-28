@@ -1,6 +1,6 @@
 #include <cstdio>
 
-#include "common.cuh"
+#include "common.hpp"
 
 // 朴素实现，注意iy和ix对行列的编码
 

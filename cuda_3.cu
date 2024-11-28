@@ -1,6 +1,6 @@
 #include <cstdio>
 
-#include "common.cuh"
+#include "common.hpp"
 
 // 一个线程完成4X4个线程的工作
 

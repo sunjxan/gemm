@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <cublas_v2.h>
 
-#include "common.cuh"
+#include "common.hpp"
 
 void gemm(const real *A, const real *B, real *C)
 {

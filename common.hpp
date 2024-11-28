@@ -2,7 +2,7 @@
 #include <cstdio>
 #include <cmath>
 
-#include "error.cuh"
+#include "error.h"
 
 const unsigned SKIP = 5, REPEATS = 5;
 const size_t M = 2048, N = 2048, K = 2048;
