@@ -5,9 +5,9 @@
 #include "error.h"
 
 const unsigned SKIP = 5, REPEATS = 5;
-const size_t M = 2048, N = 2048, K = 2048;
+const size_t M = 512, N = 256, K = 128;
 const size_t real_size = sizeof(real);
-const size_t MK = M * N, KN = K * N, MN = M * N;
+const size_t MK = M * K, KN = K * N, MN = M * N;
 const size_t MK_size = MK * real_size, KN_size = KN * real_size, MN_size = MN * real_size;
 
 void gemm(const real *, const real *, real *);
@@ -19,10 +19,11 @@ void random_init(real *data, const size_t size)
     }
 }
 
-__global__ void check_kernel(const real (*A)[K], const real (*B)[N], real (*C)[K])
+__global__ void check_kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
 {
     unsigned iy = blockIdx.y * blockDim.y + threadIdx.y;
     unsigned ix = blockIdx.x * blockDim.x + threadIdx.x;
+
     if (iy < M && ix < N) {
         real sum = 0;
         for (size_t t = 0; t < K; ++t) {

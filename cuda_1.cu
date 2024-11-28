@@ -4,10 +4,11 @@
 
 // 朴素实现，注意iy和ix对行列的编码
 
-__global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[K])
+__global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
 {
     unsigned iy = blockIdx.y * blockDim.y + threadIdx.y;
     unsigned ix = blockIdx.x * blockDim.x + threadIdx.x;
+    
     if (iy < M && ix < N) {
         real sum = 0.0f;
         for (size_t t = 0; t < K; ++t) {

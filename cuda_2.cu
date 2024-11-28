@@ -10,12 +10,12 @@
 // unit取简单情况等于block_shape，一次取满
 constexpr size_t block_shape = 32, unit = block_shape;
 
-__global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[K])
+__global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
 {
-    __shared__ real s_a[block_shape][unit], s_b[unit][block_shape];
-
     unsigned ty = threadIdx.y, iy = blockIdx.y * block_shape + ty;
     unsigned tx = threadIdx.x, ix = blockIdx.x * block_shape + tx;
+
+    __shared__ real s_a[block_shape][unit], s_b[unit][block_shape];
 
     real sum = 0.0f, frag_a = 0.0f, frag_b = 0.0f;
     // 安培之前的架构，从全局内存转移到共享内存需要经过寄存器，并做块同步
