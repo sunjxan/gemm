@@ -106,12 +106,12 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
             // 切换目标缓冲区
             reg_stage_idx ^= 1;
         }
-        // 切换目标缓冲区
-        smem_stage_idx ^= 1;
         // 避免在共享内存使用之前被修改
         if (i != K / block_unit) {
             __syncthreads();
         }
+        // 切换目标缓冲区
+        smem_stage_idx ^= 1;
     }
     for (size_t p = 0; p < thread_shape; ++p) {
         for (size_t q = 0; q < thread_shape; ++q) {
