@@ -2,8 +2,9 @@
 
 #include "common.hpp"
 
-// 1. 使用寄存器缓存线程负责的子矩阵的计算数据，为达到最高使用效率，子矩阵应是正方形
-// 2. 寄存器数量有限，从共享内存加载到寄存器计算的过程，应在K轴上分段进行
+// 1. 运用分治思想，矩阵分块加载到共享内存后，子矩阵相乘可以继续提高存储层次进行分块
+// 2. 使用寄存器缓存线程负责的子矩阵的计算数据，为达到最高使用效率，子矩阵应是正方形
+// 3. 寄存器数量有限，从共享内存加载到寄存器计算的过程，应在K轴上分段进行
 
 // block_shape应能整除M、K、N，block_unit应能整除K
 constexpr size_t block_shape = 32, block_unit = 16;
@@ -55,12 +56,8 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
         }
     }
     for (size_t i = 0; i < K / block_unit; ++i) {
-        // 避免在共享内存使用之前被修改
-        if (i) {
-            __syncthreads();
-        }
         // 在A中拷贝的列序col_a，在B中拷贝的行序row_b
-        size_t i_block_unit = i * block_unit, col_a = i_block_unit + tx, row_b = i_block_unit + ty;
+        size_t col_a = i * block_unit + tx, row_b = i * block_unit + ty;
         for (size_t j = 0; j < thread_shape; ++j) {
             for (size_t k = 0; k < frag_size; ++k) {
                 // 安培之前的架构，从全局内存转移到共享内存会经过寄存器中转
@@ -77,6 +74,10 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
         // 协同拷贝，等待拷贝结束
         __syncthreads();
         kernel_thread(s_a, s_b, sum);
+        // 避免在共享内存使用之前被修改
+        if (i != K / block_unit - 1) {
+            __syncthreads();
+        }
     }
     for (size_t p = 0; p < thread_shape; ++p) {
         for (size_t q = 0; q < thread_shape; ++q) {

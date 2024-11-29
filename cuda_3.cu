@@ -24,12 +24,8 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
         }
     }
     for (size_t i = 0; i < K / unit; ++i) {
-        // 避免在共享内存使用之前被修改
-        if (i) {
-            __syncthreads();
-        }
         // 在A中拷贝的列序col_a，在B中拷贝的行序row_b
-        size_t i_unit = i * unit, col_a = i_unit + tx, row_b = i_unit + ty;
+        size_t col_a = i * unit + tx, row_b = i * unit + ty;
         for (size_t j = 0; j < thread_shape; ++j) {
             for (size_t k = 0; k < frag_size; ++k) {
                 // 安培之前的架构，从全局内存转移到共享内存会经过寄存器中转
@@ -51,6 +47,10 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
                     sum[p][q] += s_a[ty + p * block_dim][j] * s_b[j][tx + q * block_dim];
                 }
             }
+        }
+        // 避免在共享内存使用之前被修改
+        if (i != K / unit - 1) {
+            __syncthreads();
         }
     }
     for (size_t p = 0; p < thread_shape; ++p) {
