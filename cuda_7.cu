@@ -2,8 +2,7 @@
 
 #include "common.hpp"
 
-// 对全局内存加载到共享内存和共享内存加载到寄存器都进行双缓冲/预取，叫ping-pong
-// 共享内存加载到寄存器循环体也放到核函数主循环内
+// 让最后一个小迭代为下一轮预取数据
 
 // block_shape应能整除M、K、N，block_unit应能整除K
 constexpr size_t block_shape = 32, block_unit = 16;
@@ -96,17 +95,17 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
                     // 在A中拷贝的列序col_a，在B中拷贝的行序row_b
                     size_t col_a = i * block_unit + tx, row_b = i * block_unit + ty;
                     // 覆盖上一轮迭代计算使用的共享内存
-                    for (size_t j = 0; j < thread_shape; ++j) {
-                        for (size_t k = 0; k < frag_size; ++k) {
+                    for (size_t p = 0; p < thread_shape; ++p) {
+                        for (size_t q = 0; q < frag_size; ++q) {
                             // 安培之前的架构，从全局内存转移到共享内存会经过寄存器中转
-                            s_a[smem_stage_idx ^ 1][ty + j * block_dim][tx + k * block_dim] =
-                                A[iy + j * block_dim][col_a + k * block_dim];
+                            s_a[smem_stage_idx ^ 1][ty + p * block_dim][tx + q * block_dim] =
+                                A[iy + p * block_dim][col_a + q * block_dim];
                         }
                     }
-                    for (size_t k = 0; k < frag_size; ++k) {
-                        for (size_t j = 0; j < thread_shape; ++j) {
-                            s_b[smem_stage_idx ^ 1][ty + k * block_dim][tx + j * block_dim] =
-                                B[row_b + k * block_dim][ix + j * block_dim];
+                    for (size_t q = 0; q < frag_size; ++q) {
+                        for (size_t p = 0; p < thread_shape; ++p) {
+                            s_b[smem_stage_idx ^ 1][ty + q * block_dim][tx + p * block_dim] =
+                                B[row_b + q * block_dim][ix + p * block_dim];
                         }
                     }
                 }
