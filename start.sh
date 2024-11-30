@@ -15,6 +15,8 @@ nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr cuda_5.cu -o a && 
 nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr -DUSE_DP cuda_5.cu -o a && ./a
 nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr cuda_6.cu -o a && ./a
 nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr -DUSE_DP cuda_6.cu -o a && ./a
+nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr cuda_7.cu -o a && ./a
+nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr -DUSE_DP cuda_7.cu -o a && ./a
 
 nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr cublas.cu -lcublas -o a && ./a
 nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr -DUSE_DP cublas.cu -lcublas -o a && ./a

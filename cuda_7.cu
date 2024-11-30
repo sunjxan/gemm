@@ -48,51 +48,66 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
     // 协同拷贝，等待拷贝结束
     __syncthreads();
 
+    // 取第一部分
+    unsigned reg_stage_idx = 0;
+    for (size_t p = 0; p < thread_shape; ++p) {
+        for (size_t q = 0; q < thread_unit; ++q) {
+            r_a[reg_stage_idx][p][q] = s_a[smem_stage_idx][ty + p * block_dim][q];
+        }
+    }
+    for (size_t q = 0; q < thread_unit; ++q) {
+        for (size_t p = 0; p < thread_shape; ++p) {
+            r_b[reg_stage_idx][q][p] = s_b[smem_stage_idx][q][tx + p * block_dim];
+        }
+    }
+
     // 调整循环下标
     for (size_t i = 1; i <= K / block_unit; ++i) {
-        if (i != K / block_unit) {
-            // 在A中拷贝的列序col_a，在B中拷贝的行序row_b
-            size_t col_a = i * block_unit + tx, row_b = i * block_unit + ty;
-            // 覆盖上一轮迭代计算使用的共享内存
-            for (size_t j = 0; j < thread_shape; ++j) {
-                for (size_t k = 0; k < frag_size; ++k) {
-                    // 安培之前的架构，从全局内存转移到共享内存会经过寄存器中转
-                    s_a[smem_stage_idx ^ 1][ty + j * block_dim][tx + k * block_dim] =
-                        A[iy + j * block_dim][col_a + k * block_dim];
-                }
-            }
-            for (size_t k = 0; k < frag_size; ++k) {
-                for (size_t j = 0; j < thread_shape; ++j) {
-                    s_b[smem_stage_idx ^ 1][ty + k * block_dim][tx + j * block_dim] =
-                        B[row_b + k * block_dim][ix + j * block_dim];
-                }
-            }
-        }
-        // 取第一部分
-        unsigned reg_stage_idx = 0;
-        for (size_t p = 0; p < thread_shape; ++p) {
-            for (size_t q = 0; q < thread_unit; ++q) {
-                r_a[reg_stage_idx][p][q] = s_a[smem_stage_idx][ty + p * block_dim][q];
-            }
-        }
-        for (size_t q = 0; q < thread_unit; ++q) {
-            for (size_t p = 0; p < thread_shape; ++p) {
-                r_b[reg_stage_idx][q][p] = s_b[smem_stage_idx][q][tx + p * block_dim];
-            }
-        }
         // 调整循环下标
         for (size_t j = 1; j <= block_unit / thread_unit; ++j) {
-            if (j != block_unit / thread_unit) {
+            // 提前到最后一次小迭代之前，切换到下一批次共享内存
+            if (j == block_unit / thread_unit) {
+                // 避免在共享内存使用之前被修改
+                if (i != K / block_unit) {
+                    __syncthreads();
+                }
+                // 切换目标缓冲区
+                smem_stage_idx ^= 1; 
+            }
+            if (!(i == K / block_unit && j == block_unit / thread_unit)) {
+                // 最后一次小迭代取下一批次共享内存里的开头部分
+                size_t nj = j != block_unit / thread_unit ? j : 0;
                 for (size_t p = 0; p < thread_shape; ++p) {
                     for (size_t q = 0; q < thread_unit; ++q) {
                         r_a[reg_stage_idx ^ 1][p][q] =
-                            s_a[smem_stage_idx][ty + p * block_dim][j * thread_unit + q];
+                            s_a[smem_stage_idx][ty + p * block_dim][nj * thread_unit + q];
                     }
                 }
                 for (size_t q = 0; q < thread_unit; ++q) {
                     for (size_t p = 0; p < thread_shape; ++p) {
                         r_b[reg_stage_idx ^ 1][q][p] =
-                            s_b[smem_stage_idx][j * thread_unit + q][tx + p * block_dim];
+                            s_b[smem_stage_idx][nj * thread_unit + q][tx + p * block_dim];
+                    }
+                }
+            }
+            // 推迟到第一次小迭代的预取之后
+            if (j == 1) {
+                if (i != K / block_unit) {
+                    // 在A中拷贝的列序col_a，在B中拷贝的行序row_b
+                    size_t col_a = i * block_unit + tx, row_b = i * block_unit + ty;
+                    // 覆盖上一轮迭代计算使用的共享内存
+                    for (size_t j = 0; j < thread_shape; ++j) {
+                        for (size_t k = 0; k < frag_size; ++k) {
+                            // 安培之前的架构，从全局内存转移到共享内存会经过寄存器中转
+                            s_a[smem_stage_idx ^ 1][ty + j * block_dim][tx + k * block_dim] =
+                                A[iy + j * block_dim][col_a + k * block_dim];
+                        }
+                    }
+                    for (size_t k = 0; k < frag_size; ++k) {
+                        for (size_t j = 0; j < thread_shape; ++j) {
+                            s_b[smem_stage_idx ^ 1][ty + k * block_dim][tx + j * block_dim] =
+                                B[row_b + k * block_dim][ix + j * block_dim];
+                        }
                     }
                 }
             }
@@ -106,12 +121,6 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
             // 切换目标缓冲区
             reg_stage_idx ^= 1;
         }
-        // 避免在共享内存使用之前被修改
-        if (i != K / block_unit) {
-            __syncthreads();
-        }
-        // 切换目标缓冲区
-        smem_stage_idx ^= 1;
     }
     for (size_t p = 0; p < thread_shape; ++p) {
         for (size_t q = 0; q < thread_shape; ++q) {

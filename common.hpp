@@ -4,11 +4,11 @@
 
 #include "error.h"
 
-const unsigned SKIP = 5, REPEATS = 5;
-const size_t M = 5120, N = 2048, K = 4096;
-const size_t real_size = sizeof(real);
-const size_t MK = M * K, KN = K * N, MN = M * N;
-const size_t MK_size = MK * real_size, KN_size = KN * real_size, MN_size = MN * real_size;
+constexpr unsigned SKIP = 5, REPEATS = 5;
+constexpr size_t M = 5120, N = 2048, K = 4096;
+constexpr size_t real_size = sizeof(real);
+constexpr size_t MK = M * K, KN = K * N, MN = M * N;
+constexpr size_t MK_size = MK * real_size, KN_size = KN * real_size, MN_size = MN * real_size;
 
 void gemm(const real *, const real *, real *);
 
@@ -53,7 +53,7 @@ bool check(const real *A, const real *B, const real *C) {
     // N是列对应x，M是行对应y
     dim3 grid_size(DIVUP(N, block_size.x), DIVUP(M, block_size.y));
     check_kernel<<<grid_size, block_size>>>(d_nA, d_nB, d_nC);
-    CHECK(cudaGetLastError());
+    CHECK(cudaDeviceSynchronize());
 
     CHECK(cudaMemcpy(h_C, d_C, MN_size, cudaMemcpyDeviceToHost));
 

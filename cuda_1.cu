@@ -28,7 +28,7 @@ void gemm(const real *A, const real *B, real *C)
     // N是列对应x，M是行对应y
     dim3 grid_size(DIVUP(N, block_size.x), DIVUP(M, block_size.y));
     kernel<<<grid_size, block_size>>>(nA, nB, nC);
-    CHECK(cudaGetLastError());
+    CHECK(cudaDeviceSynchronize());
 }
 
 int main()
