@@ -2,7 +2,7 @@
 
 #include "common.hpp"
 
-// 让最后一个小迭代为下一轮预取数据
+// 让最后一个小迭代为下一轮预取数据，引入循环展开
 
 // block_shape应能整除M、K、N，block_unit应能整除K
 constexpr size_t block_shape = 32, block_unit = 16;
@@ -63,6 +63,8 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
     // 调整循环下标
     for (size_t i = 1; i <= K / block_unit; ++i) {
         // 调整循环下标
+        // 展开复杂的内层循环
+        #pragma unroll
         for (size_t j = 1; j <= block_unit / thread_unit; ++j) {
             // 提前到最后一次小迭代之前，切换到下一批次共享内存
             if (j == block_unit / thread_unit) {
