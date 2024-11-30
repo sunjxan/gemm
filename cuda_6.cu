@@ -88,13 +88,13 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
                 for (size_t p = 0; p < thread_shape; ++p) {
                     for (size_t q = 0; q < thread_unit; ++q) {
                         r_a[reg_stage_idx ^ 1][p][q] =
-                            s_a[smem_stage_idx][ty + p * block_dim][j * thread_unit + q];
+                            s_a[smem_stage_idx][ty + p * block_dim][q + j * thread_unit];
                     }
                 }
                 for (size_t q = 0; q < thread_unit; ++q) {
                     for (size_t p = 0; p < thread_shape; ++p) {
                         r_b[reg_stage_idx ^ 1][q][p] =
-                            s_b[smem_stage_idx][j * thread_unit + q][tx + p * block_dim];
+                            s_b[smem_stage_idx][q + j * thread_unit][tx + p * block_dim];
                     }
                 }
             }

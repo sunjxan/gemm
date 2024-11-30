@@ -23,12 +23,12 @@ __device__ void kernel_thread(const real (*A)[block_unit], const real (*B)[block
     for (size_t i = 0; i < block_unit / thread_unit; ++i) {
         for (size_t j = 0; j < thread_shape; ++j) {
             for (size_t k = 0; k < thread_unit; ++k) {
-                r_a[j][k] = A[ty + j * block_dim][i * thread_unit + k];
+                r_a[j][k] = A[ty + j * block_dim][k + i * thread_unit];
             }
         }
         for (size_t k = 0; k < thread_unit; ++k) {
             for (size_t j = 0; j < thread_shape; ++j) {
-                r_b[k][j] = B[i * thread_unit + k][tx + j * block_dim];
+                r_b[k][j] = B[k + i * thread_unit][tx + j * block_dim];
             }
         }
         for (size_t j = 0; j < thread_unit; ++j) {
