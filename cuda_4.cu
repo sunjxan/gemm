@@ -74,8 +74,8 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
         // 协同拷贝，等待拷贝结束
         __syncthreads();
         kernel_thread(s_a, s_b, sum);
-        // 避免在共享内存使用之前被修改
         if (i != K / block_unit - 1) {
+            // 避免在共享内存使用之前被修改
             __syncthreads();
         }
     }

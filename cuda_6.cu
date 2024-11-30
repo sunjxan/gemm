@@ -3,7 +3,7 @@
 #include "common.hpp"
 
 // 对全局内存加载到共享内存和共享内存加载到寄存器都进行双缓冲/预取，叫ping-pong
-// 共享内存加载到寄存器循环体也放到核函数主循环内
+// 共享内存加载到寄存器循环体也放到核函数主循环内，并进行循环展开
 
 // block_shape应能整除M、K、N，block_unit应能整除K
 constexpr size_t block_shape = 32, block_unit = 16;
@@ -81,6 +81,8 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
             }
         }
         // 调整循环下标
+        // 展开复杂的内层循环
+        #pragma unroll
         for (size_t j = 1; j <= block_unit / thread_unit; ++j) {
             if (j != block_unit / thread_unit) {
                 for (size_t p = 0; p < thread_shape; ++p) {
@@ -106,8 +108,8 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
             // 切换目标缓冲区
             reg_stage_idx ^= 1;
         }
-        // 避免在共享内存使用之前被修改
         if (i != K / block_unit) {
+            // 避免在共享内存使用之前被修改
             __syncthreads();
         }
         // 切换目标缓冲区

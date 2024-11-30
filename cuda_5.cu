@@ -41,8 +41,8 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
         for (size_t j = 0; j < unit; ++j) {
             sum += s_a[smem_stage_idx][ty][j] * s_b[smem_stage_idx][j][tx];
         }
-        // 避免在共享内存使用之前被修改
         if (i != K / unit) {
+            // 避免在共享内存使用之前被修改
             __syncthreads();
         }
         // 切换目标缓冲区

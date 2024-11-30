@@ -2,7 +2,7 @@
 
 #include "common.hpp"
 
-// 让最后一个小迭代为下一轮预取数据，引入循环展开
+// 让最后一个小迭代为下一轮预取数据，从全局内存转移数据到共享内存拆分成两步，使用寄存器中转
 
 // block_shape应能整除M、K、N，block_unit应能整除K
 constexpr size_t block_shape = 32, block_unit = 16;
@@ -21,6 +21,9 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
 
     // 不是协同拷贝，每个线程拷贝自己所需的数据，不同线程会重复拷贝数据
     real r_a[2][thread_shape][thread_unit], r_b[2][thread_unit][thread_shape];
+
+    // 从全局内存转移到共享内存的中转寄存器
+    real frag_a[thread_shape][frag_size], frag_b[frag_size][thread_shape];
 
     real sum[thread_shape][thread_shape];
     for (size_t p = 0; p < thread_shape; ++p) {
@@ -68,12 +71,24 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
         for (size_t j = 1; j <= block_unit / thread_unit; ++j) {
             // 提前到最后一次小迭代之前，切换到下一批次共享内存
             if (j == block_unit / thread_unit) {
-                // 避免在共享内存使用之前被修改
                 if (i != K / block_unit) {
+                    for (size_t p = 0; p < thread_shape; ++p) {
+                        for (size_t q = 0; q < frag_size; ++q) {
+                            s_a[smem_stage_idx ^ 1][ty + p * block_dim][tx + q * block_dim] =
+                                frag_a[p][q];
+                        }
+                    }
+                    for (size_t q = 0; q < frag_size; ++q) {
+                        for (size_t p = 0; p < thread_shape; ++p) {
+                            s_b[smem_stage_idx ^ 1][ty + q * block_dim][tx + p * block_dim] =
+                                frag_b[q][p];
+                        }
+                    }
+                    // 避免在共享内存使用之前被修改
                     __syncthreads();
                 }
                 // 切换目标缓冲区
-                smem_stage_idx ^= 1; 
+                smem_stage_idx ^= 1;
             }
             if (!(i == K / block_unit && j == block_unit / thread_unit)) {
                 // 最后一次小迭代取下一批次共享内存里的开头部分
@@ -99,15 +114,12 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
                     // 覆盖上一轮迭代计算使用的共享内存
                     for (size_t p = 0; p < thread_shape; ++p) {
                         for (size_t q = 0; q < frag_size; ++q) {
-                            // 安培之前的架构，从全局内存转移到共享内存会经过寄存器中转
-                            s_a[smem_stage_idx ^ 1][ty + p * block_dim][tx + q * block_dim] =
-                                A[iy + p * block_dim][col_a + q * block_dim];
+                            frag_a[p][q] = A[iy + p * block_dim][col_a + q * block_dim];
                         }
                     }
                     for (size_t q = 0; q < frag_size; ++q) {
                         for (size_t p = 0; p < thread_shape; ++p) {
-                            s_b[smem_stage_idx ^ 1][ty + q * block_dim][tx + p * block_dim] =
-                                B[row_b + q * block_dim][ix + p * block_dim];
+                            frag_b[q][p] = B[row_b + q * block_dim][ix + p * block_dim];
                         }
                     }
                 }
