@@ -1,5 +1,3 @@
-#include <cstdio>
-
 #include "common.hpp"
 
 // 1. 运用分治思想，矩阵分块加载到共享内存后，子矩阵相乘可以继续提高存储层次进行分块
@@ -87,7 +85,7 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
     }
 }
 
-void gemm(const real *A, const real *B, real *C)
+void matmul(const real *A, const real *B, real *C)
 {
     const real (*nA)[K] = reinterpret_cast<decltype(nA)>(A);
     const real (*nB)[N] = reinterpret_cast<decltype(nB)>(B);

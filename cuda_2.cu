@@ -1,5 +1,3 @@
-#include <cstdio>
-
 #include "common.hpp"
 
 // 1. 为了避免竞争条件，一个线程完成一个或多个坐标点的矩阵乘法，在K轴上不分多个线程
@@ -37,7 +35,7 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
     C[iy][ix] = sum;
 }
 
-void gemm(const real *A, const real *B, real *C)
+void matmul(const real *A, const real *B, real *C)
 {
     const real (*nA)[K] = reinterpret_cast<decltype(nA)>(A);
     const real (*nB)[N] = reinterpret_cast<decltype(nB)>(B);

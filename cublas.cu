@@ -1,9 +1,8 @@
-#include <cstdio>
 #include <cublas_v2.h>
 
 #include "common.hpp"
 
-void gemm(const real *A, const real *B, real *C)
+void matmul(const real *A, const real *B, real *C)
 {
     cublasHandle_t handle;
     CHECK_CUBLAS(cublasCreate(&handle));

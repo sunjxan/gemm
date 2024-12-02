@@ -1,5 +1,3 @@
-#include <cstdio>
-
 #include "common.hpp"
 
 // 对全局内存加载到共享内存和共享内存加载到寄存器都进行双缓冲/预取，叫ping-pong
@@ -123,7 +121,7 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
     }
 }
 
-void gemm(const real *A, const real *B, real *C)
+void matmul(const real *A, const real *B, real *C)
 {
     const real (*nA)[K] = reinterpret_cast<decltype(nA)>(A);
     const real (*nB)[N] = reinterpret_cast<decltype(nB)>(B);

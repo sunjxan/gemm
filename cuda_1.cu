@@ -1,5 +1,3 @@
-#include <cstdio>
-
 #include "common.hpp"
 
 // 朴素实现，注意iy和ix对行列的编码
@@ -18,7 +16,7 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
     }
 }
 
-void gemm(const real *A, const real *B, real *C)
+void matmul(const real *A, const real *B, real *C)
 {
     const real (*nA)[K] = reinterpret_cast<decltype(nA)>(A);
     const real (*nB)[N] = reinterpret_cast<decltype(nB)>(B);

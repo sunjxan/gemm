@@ -10,7 +10,7 @@ constexpr size_t real_size = sizeof(real);
 constexpr size_t MK = M * K, KN = K * N, MN = M * N;
 constexpr size_t MK_size = MK * real_size, KN_size = KN * real_size, MN_size = MN * real_size;
 
-void gemm(const real *, const real *, real *);
+void matmul(const real *, const real *, real *);
 
 void random_init(real *data, const size_t size)
 {
@@ -84,7 +84,7 @@ real timing(const real *A, const real *B, real *C)
     CHECK(cudaEventCreate(&stop));
     CHECK(cudaEventRecord(start, 0));
 
-    gemm(A, B, C);
+    matmul(A, B, C);
 
     CHECK(cudaEventRecord(stop, 0));
     CHECK(cudaEventSynchronize(stop));
@@ -112,7 +112,7 @@ void launch_cpu()
         elapsed_time = timing(h_A, h_B, h_C);
         total_time += elapsed_time;
     }
-    printf("Time: %.3f ms\n", total_time / REPEATS);
+    printf("Time: %9.3f ms\n", total_time / REPEATS);
 
     printf("Check: %s\n", check(h_A, h_B, h_C) ? "OK" : "Failed");
 
@@ -147,7 +147,7 @@ void launch_gpu()
         elapsed_time = timing(d_A, d_B, d_C);
         total_time += elapsed_time;
     }
-    printf("Time: %.3f ms\n", total_time / REPEATS);
+    printf("Time: %9.3f ms\n", total_time / REPEATS);
 
     CHECK(cudaMemcpy(h_C, d_C, MN_size, cudaMemcpyDeviceToHost));
     printf("Check: %s\n", check(h_A, h_B, h_C) ? "OK" : "Failed");

@@ -1,8 +1,6 @@
-#include <cstdio>
-
 #include "common.hpp"
 
-void gemm(const real *A, const real *B, real *C)
+void matmul(const real *A, const real *B, real *C)
 {
     CHECK(cudaMemset(C, 0, MN_size));
 

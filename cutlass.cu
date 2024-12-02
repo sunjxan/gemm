@@ -1,9 +1,7 @@
-#include <cstdio>
-
 #include "common.hpp"
 #include "cutlass/gemm/device/gemm.h"
 
-void gemm(const real *A, const real *B, real *C)
+void matmul(const real *A, const real *B, real *C)
 {
     using RowMajor = cutlass::layout::RowMajor;
     using CutlassGemm = cutlass::gemm::device::Gemm<real, RowMajor, real, RowMajor, real, RowMajor>;

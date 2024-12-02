@@ -1,5 +1,3 @@
-#include <cstdio>
-
 #include "common.hpp"
 
 // 让最后一个小迭代为下一轮预取数据，从全局内存转移数据到共享内存拆分成两步，使用寄存器中转
@@ -143,7 +141,7 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
     }
 }
 
-void gemm(const real *A, const real *B, real *C)
+void matmul(const real *A, const real *B, real *C)
 {
     const real (*nA)[K] = reinterpret_cast<decltype(nA)>(A);
     const real (*nB)[N] = reinterpret_cast<decltype(nB)>(B);
