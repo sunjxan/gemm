@@ -8,7 +8,7 @@ void matmul(const real *A, const real *B, real *C)
 
     for (size_t i = 0; i < M; ++i) {
         for (size_t j = 0; j < N; ++j) {
-            real sum = 0;
+            real sum = 0.0;
             for (size_t t = 0; t < K; ++t) {
                 sum += nA[i][t] * nB[t][j];
             }
