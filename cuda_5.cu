@@ -17,7 +17,7 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
 
     __shared__ real s_a[2][block_shape][unit], s_b[2][unit][block_shape];
 
-    real sum = 0.0f;
+    real sum = 0.0;
 
     // 取第一部分
     unsigned smem_stage_idx = 0;

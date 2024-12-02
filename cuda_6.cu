@@ -24,7 +24,7 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
     real sum[thread_shape][thread_shape];
     for (size_t p = 0; p < thread_shape; ++p) {
         for (size_t q = 0; q < thread_shape; ++q) {
-            sum[p][q] = 0.0f;
+            sum[p][q] = 0.0;
         }
     }
 

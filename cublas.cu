@@ -6,7 +6,7 @@ void matmul(const real *A, const real *B, real *C)
 {
     cublasHandle_t handle;
     CHECK_CUBLAS(cublasCreate(&handle));
-    real alpha = 1.0f, beta = 0.0f;
+    real alpha = 1.0, beta = 0.0;
     #ifdef USE_DP
         CHECK_CUBLAS(cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K,
             &alpha, B, N, A, K, &beta, C, N));

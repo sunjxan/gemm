@@ -8,7 +8,7 @@ void matmul(const real *A, const real *B, real *C)
 
     CutlassGemm gemm_operator;
     
-    real alpha = 1.0f, beta = 0.0f;
+    real alpha = 1.0, beta = 0.0;
     CutlassGemm::Arguments args({M, N, K},
                             {A, K},
                             {B, N},

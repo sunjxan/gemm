@@ -25,7 +25,7 @@ __global__ void check_kernel(const real (*A)[K], const real (*B)[N], real (*C)[N
     unsigned ix = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (iy < M && ix < N) {
-        real sum = 0.0f;
+        real sum = 0.0;
         for (size_t t = 0; t < K; ++t) {
             sum += A[iy][t] * B[t][ix];
         }

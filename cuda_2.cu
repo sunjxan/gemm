@@ -15,7 +15,7 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
 
     __shared__ real s_a[block_shape][unit], s_b[unit][block_shape];
 
-    real sum = 0.0f;
+    real sum = 0.0;
     for (size_t i = 0; i < K / unit; ++i) {
         // 在A中拷贝的列序col_a，在B中拷贝的行序row_b
         size_t col_a = i * unit + tx, row_b = i * unit + ty;
