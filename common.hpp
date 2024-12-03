@@ -34,10 +34,10 @@ __global__ void check_kernel(const real (*A)[K], const real (*B)[N], real (*C)[N
 }
 
 bool check(const real *A, const real *B, const real *C) {
-    real *h_C;
+    real *h_C = nullptr;
     CHECK(cudaMallocHost(&h_C, MN_size));
 
-    real *d_A, *d_B, *d_C;
+    real *d_A = nullptr, *d_B = nullptr, *d_C = nullptr;
     CHECK(cudaMalloc(&d_A, MK_size));
     CHECK(cudaMalloc(&d_B, KN_size));
     CHECK(cudaMalloc(&d_C, MN_size));
@@ -96,7 +96,7 @@ real timing(const real *A, const real *B, real *C)
 
 void launch_cpu()
 {
-    real *h_A, *h_B, *h_C;
+    real *h_A = nullptr, *h_B = nullptr, *h_C = nullptr;
     CHECK(cudaMallocHost(&h_A, MK_size));
     CHECK(cudaMallocHost(&h_B, KN_size));
     CHECK(cudaMallocHost(&h_C, MN_size));
@@ -123,7 +123,7 @@ void launch_cpu()
 
 void launch_gpu()
 {
-    real *h_A, *h_B, *h_C;
+    real *h_A = nullptr, *h_B = nullptr, *h_C = nullptr;
     CHECK(cudaMallocHost(&h_A, MK_size));
     CHECK(cudaMallocHost(&h_B, KN_size));
     CHECK(cudaMallocHost(&h_C, MN_size));
@@ -131,7 +131,7 @@ void launch_gpu()
     random_init(h_A, MK);
     random_init(h_B, KN);
 
-    real *d_A, *d_B, *d_C;
+    real *d_A = nullptr, *d_B = nullptr, *d_C = nullptr;
     CHECK(cudaMalloc(&d_A, MK_size));
     CHECK(cudaMalloc(&d_B, KN_size));
     CHECK(cudaMalloc(&d_C, MN_size));
