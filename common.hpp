@@ -53,6 +53,7 @@ bool check(const real *A, const real *B, const real *C) {
     // N是列对应x，M是行对应y
     dim3 grid_size(DIVUP(N, block_size.x), DIVUP(M, block_size.y));
     check_kernel<<<grid_size, block_size>>>(d_nA, d_nB, d_nC);
+    CHECK(cudaGetLastError());
     CHECK(cudaDeviceSynchronize());
 
     CHECK(cudaMemcpy(h_C, d_C, MN_size, cudaMemcpyDeviceToHost));
