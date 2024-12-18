@@ -11,7 +11,6 @@ constexpr size_t thread_unit = 1;
 
 __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
 {
-
     unsigned ty = threadIdx.y, iy = blockIdx.y * block_shape + ty;
     unsigned tx = threadIdx.x, ix = blockIdx.x * block_shape + tx;
 
@@ -61,8 +60,6 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
     // 调整循环下标
     for (size_t i = 1; i <= K / block_unit; ++i) {
         // 调整循环下标
-        // 展开复杂的内层循环
-        #pragma unroll
         for (size_t j = 1; j <= block_unit / thread_unit; ++j) {
             // 提前到最后一次小迭代之前，切换到下一批次共享内存
             if (j == block_unit / thread_unit) {
