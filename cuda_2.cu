@@ -4,30 +4,30 @@
 // 2. 使用共享内存缓存线程块负责的子矩阵的计算数据，为达到最高使用效率，子矩阵应是正方形
 // 3. 共享内存容量有限，从全局内存加载到共享内存计算的过程，应在K轴上分段进行
 
-// block_shape应能整除M、K、N，unit应能整除K
-// unit取简单情况等于block_shape，一次取满
-constexpr size_t block_shape = 32, unit = block_shape;
+// block_shape应能整除M、K、N，block_unit应能整除K
+// block_unit取简单情况等于block_shape，一次取满
+constexpr size_t block_shape = 32, block_unit = block_shape;
 
 __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
 {
     unsigned ty = threadIdx.y, iy = blockIdx.y * block_shape + ty;
     unsigned tx = threadIdx.x, ix = blockIdx.x * block_shape + tx;
 
-    __shared__ real s_a[block_shape][unit], s_b[unit][block_shape];
+    __shared__ real s_a[block_shape][block_unit], s_b[block_unit][block_shape];
 
     real sum = 0.0;
-    for (size_t i = 0; i < K / unit; ++i) {
+    for (size_t i = 0; i < K / block_unit; ++i) {
         // 在A中拷贝的列序col_a，在B中拷贝的行序row_b
-        size_t col_a = i * unit + tx, row_b = i * unit + ty;
+        size_t col_a = i * block_unit + tx, row_b = i * block_unit + ty;
         // 安培之前的架构，从全局内存转移到共享内存会经过寄存器中转
         s_a[ty][tx] = A[iy][col_a];
         s_b[ty][tx] = B[row_b][ix];
         // 协同拷贝，等待拷贝结束
         __syncthreads();
-        for (size_t j = 0; j < unit; ++j) {
+        for (size_t j = 0; j < block_unit; ++j) {
             sum += s_a[ty][j] * s_b[j][tx];
         }
-        if (i != K / unit - 1) {
+        if (i != K / block_unit - 1) {
             // 避免在共享内存使用之前被修改
             __syncthreads();
         }

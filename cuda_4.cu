@@ -41,7 +41,6 @@ __device__ void kernel_thread(const real (*A)[block_unit], const real (*B)[block
 
 __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
 {
-
     unsigned ty = threadIdx.y, iy = blockIdx.y * block_shape + ty;
     unsigned tx = threadIdx.x, ix = blockIdx.x * block_shape + tx;
 
@@ -71,7 +70,9 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
         }
         // 协同拷贝，等待拷贝结束
         __syncthreads();
+
         kernel_thread(s_a, s_b, sum);
+
         if (i != K / block_unit - 1) {
             // 避免在共享内存使用之前被修改
             __syncthreads();
