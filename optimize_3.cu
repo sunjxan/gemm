@@ -5,7 +5,7 @@
 #define FLOAT4(pointer) (reinterpret_cast<float4 *>(&(pointer))[0])
 #define CFLOAT4(pointer) (reinterpret_cast<const float4 *>(&(pointer))[0])
 
-// block_shape应能整除M、K、N，block_unit应能整除K，block_unit应大于等于4
+// block_shape应能整除M、K、N，block_unit应能整除K，block_unit应是4的正整数倍
 constexpr size_t block_shape = 128, block_unit = 8;
 // thread_shape应能整除block_shape和block_unit
 constexpr size_t thread_shape = 8, block_dim = block_shape / thread_shape;
@@ -15,8 +15,8 @@ constexpr size_t thread_unit = 1;
 __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
 {
     unsigned tid = threadIdx.x, ty = tid / block_dim, tx = tid % block_dim;
-    unsigned iy = blockIdx.y * block_shape + ty, ix = blockIdx.x * block_shape + tx;
-    unsigned by = blockIdx.y * block_shape, bx = blockIdx.x * block_shape;
+    unsigned by = blockIdx.y * block_shape, iy = by + ty;
+    unsigned bx = blockIdx.x * block_shape, ix = bx + tx;
 
     __shared__ real s_a[2][block_shape][block_unit], s_b[2][block_unit][block_shape];
 

@@ -25,6 +25,12 @@ echo ""
 echo "optimize:"
 nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr optimize_1.cu -o optimize_1.out && ./optimize_1.out
 nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr -DUSE_DP optimize_1.cu -o optimize_1_dp.out && ./optimize_1_dp.out
+nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr optimize_2.cu -o optimize_2.out && ./optimize_2.out
+nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr -DUSE_DP optimize_2.cu -o optimize_2_dp.out && ./optimize_2_dp.out
+nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr optimize_3.cu -o optimize_3.out && ./optimize_3.out
+nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr -DUSE_DP optimize_3.cu -o optimize_3_dp.out && ./optimize_3_dp.out
+nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr optimize_4.cu -o optimize_4.out && ./optimize_4.out
+nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr -DUSE_DP optimize_4.cu -o optimize_4_dp.out && ./optimize_4_dp.out
 echo ""
 echo "lib:"
 nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr cublas.cu -lcublas -o cublas.out && ./cublas.out

@@ -1,13 +1,13 @@
 #include "common.hpp"
 
-// 使用向量读取指令LDS.128优化 Shared Memory 访问（对应 float4 数据类型），大幅减少访存指令的数量
+// 将矩阵A的共享内存和寄存器片段转置存储，便于从共享内存传输到寄存器也使用指令LDS.128优化
 
 #define FLOAT4(pointer) (reinterpret_cast<float4 *>(&(pointer))[0])
 #define CFLOAT4(pointer) (reinterpret_cast<const float4 *>(&(pointer))[0])
 
-// block_shape应能整除M、K、N，block_unit应能整除K，block_unit应大于等于4
+// block_shape应能整除M、K、N，block_unit应能整除K，block_unit应是4的正整数倍
 constexpr size_t block_shape = 128, block_unit = 8;
-// thread_shape应能整除block_shape和block_unit，thread_shape应大于等于4
+// thread_shape应能整除block_shape和block_unit，thread_shape应是4的正整数倍
 constexpr size_t thread_shape = 8, block_dim = block_shape / thread_shape;
 // thread_unit应能整除block_unit
 constexpr size_t thread_unit = 1;
@@ -15,7 +15,6 @@ constexpr size_t thread_unit = 1;
 __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
 {
     unsigned tid = threadIdx.x, ty = tid / block_dim, tx = tid % block_dim;
-    unsigned iy = blockIdx.y * block_shape + ty, ix = blockIdx.x * block_shape + tx;
     unsigned by = blockIdx.y * block_shape, bx = blockIdx.x * block_shape;
 
     __shared__ real s_a[2][block_unit][block_shape], s_b[2][block_unit][block_shape];
@@ -52,8 +51,8 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
     unsigned reg_stage_idx = 0;
     for (size_t q = 0; q < thread_unit; ++q) {
         for (size_t p = 0; p < thread_shape; p+=trans_size) {
-            FLOAT4(r_a[reg_stage_idx][q][p]) = FLOAT4(s_a[smem_stage_idx][q][ty + p * block_dim]);
-            FLOAT4(r_b[reg_stage_idx][q][p]) = FLOAT4(s_b[smem_stage_idx][q][tx + p * block_dim]);
+            FLOAT4(r_a[reg_stage_idx][q][p]) = FLOAT4(s_a[smem_stage_idx][q][ty * trans_size + p * block_dim]);
+            FLOAT4(r_b[reg_stage_idx][q][p]) = FLOAT4(s_b[smem_stage_idx][q][tx * trans_size + p * block_dim]);
         }
     }
 
@@ -77,9 +76,9 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
                 for (size_t q = 0; q < thread_unit; ++q) {
                     for (size_t p = 0; p < thread_shape; p+=trans_size) {
                         FLOAT4(r_a[reg_stage_idx ^ 1][q][p]) =
-                            FLOAT4(s_a[smem_stage_idx][q + nj * thread_unit][ty + p * block_dim]);
+                            FLOAT4(s_a[smem_stage_idx][q + nj * thread_unit][ty * trans_size + p * block_dim]);
                         FLOAT4(r_b[reg_stage_idx ^ 1][q][p]) =
-                            FLOAT4(s_b[smem_stage_idx][q + nj * thread_unit][tx + p * block_dim]);
+                            FLOAT4(s_b[smem_stage_idx][q + nj * thread_unit][tx * trans_size + p * block_dim]);
                     }
                 }
             }
@@ -103,7 +102,7 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
             for (size_t k = 0; k < thread_unit; ++k) {
                 for (size_t p = 0; p < thread_shape; ++p) {
                     for (size_t q = 0; q < thread_shape; ++q) {
-                        sum[p][q] += r_a[reg_stage_idx][p][k] * r_b[reg_stage_idx][k][q];
+                        sum[p][q] += r_a[reg_stage_idx][k][p] * r_b[reg_stage_idx][k][q];
                     }
                 }
             }
@@ -111,10 +110,14 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
             reg_stage_idx ^= 1;
         }
     }
-    for (size_t p = 0; p < thread_shape; ++p) {
-        for (size_t q = 0; q < thread_shape; ++q) {
-            // 注意sum计算和传值的对应方式
-            C[iy + p * block_dim][ix + q * block_dim] = sum[p][q];
+    for (size_t p = 0; p < thread_shape; p+=trans_size) {
+        for (size_t q = 0; q < thread_shape; q+=trans_size) {
+            for (size_t y = 0; y < trans_size; ++y) {
+                for (size_t x = 0; x < trans_size; ++x) {
+                    // 注意sum计算和传值的对应方式
+                    C[by + ty * trans_size + p * block_dim + y][bx + tx * trans_size + q * block_dim + x] = sum[p + y][q + x];
+                }
+            }
         }
     }
 }
