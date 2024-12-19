@@ -31,11 +31,12 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
 
     // 取第一部分
     unsigned smem_stage_idx = 0;
-    constexpr size_t bit = real_size == sizeof(float) ? 2 : 1, trans_size = real_size == sizeof(float) ? 4 : 2;
+    size_t bit = real_size == sizeof(float) ? 2 : 1;
+    constexpr size_t trans_size = real_size == sizeof(float) ? 4 : 2;
     real trans[trans_size];
     for (size_t i = tid << bit; i < block_shape * block_unit; i += blockDim.x << bit) {
         size_t j = i / block_unit, k = i % block_unit;
-        // 安培之前的架构，从全局内存转移到共享内存会经过寄存器中转
+        // trans做矩阵A转置的中转寄存器数组
         FLOAT4(trans[0]) = CFLOAT4(A[j + by][k]);
         for (size_t x = 0; x < trans_size; ++x) {
             s_a[smem_stage_idx][k + x][j] = trans[x];
@@ -88,7 +89,7 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
                     // 覆盖上一轮迭代计算使用的共享内存
                     for (size_t r = tid << bit; r < block_shape * block_unit; r += blockDim.x << bit) {
                         size_t s = r / block_unit, t = r % block_unit;
-                        // 安培之前的架构，从全局内存转移到共享内存会经过寄存器中转
+                        // trans做矩阵A转置的中转寄存器数组
                         FLOAT4(trans[0]) = CFLOAT4(A[s + by][t + i * block_unit]);
                         for (size_t x = 0; x < trans_size; ++x) {
                             s_a[smem_stage_idx ^ 1][t + x][s] = trans[x];
@@ -110,13 +111,12 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
             reg_stage_idx ^= 1;
         }
     }
+    // 写入位置也变了，因为操作的数据位置变了
+    size_t row_start = by + ty * trans_size, col_start = bx + tx * trans_size;
     for (size_t p = 0; p < thread_shape; p+=trans_size) {
-        for (size_t q = 0; q < thread_shape; q+=trans_size) {
-            for (size_t y = 0; y < trans_size; ++y) {
-                for (size_t x = 0; x < trans_size; ++x) {
-                    // 注意sum计算和传值的对应方式
-                    C[by + ty * trans_size + p * block_dim + y][bx + tx * trans_size + q * block_dim + x] = sum[p + y][q + x];
-                }
+        for (size_t y = 0; y < trans_size; ++y) {
+            for (size_t q = 0; q < thread_shape; q+=trans_size) {
+                FLOAT4(C[row_start + p * block_dim + y][col_start + q * block_dim]) = FLOAT4(sum[p + y][q]);
             }
         }
     }
