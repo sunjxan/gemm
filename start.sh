@@ -31,6 +31,8 @@ nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr optimize_3.cu -o o
 nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr -DUSE_DP optimize_3.cu -o optimize_3_dp.out && ./optimize_3_dp.out
 nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr optimize_4.cu -o optimize_4.out && ./optimize_4.out
 nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr -DUSE_DP optimize_4.cu -o optimize_4_dp.out && ./optimize_4_dp.out
+nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr optimize_5.cu -o optimize_5.out && ./optimize_5.out
+nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr -DUSE_DP optimize_5.cu -o optimize_5_dp.out && ./optimize_5_dp.out
 echo ""
 echo "lib:"
 nvcc -O2 -std=c++17 -Xcompiler -Wall --expt-relaxed-constexpr cublas.cu -lcublas -o cublas.out && ./cublas.out
