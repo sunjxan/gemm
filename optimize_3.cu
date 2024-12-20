@@ -18,6 +18,9 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
     unsigned by = blockIdx.y * block_shape, iy = by + ty;
     unsigned bx = blockIdx.x * block_shape, ix = bx + tx;
 
+    size_t bit = real_size == sizeof(float) ? 2 : 1;
+    constexpr size_t trans_size = real_size == sizeof(float) ? 4 : 2;
+
     __shared__ real s_a[2][block_shape][block_unit], s_b[2][block_unit][block_shape];
 
     // 不是协同拷贝，每个线程拷贝自己所需的数据，不同线程会重复拷贝数据
@@ -25,14 +28,13 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
 
     real sum[thread_shape][thread_shape];
     for (size_t p = 0; p < thread_shape; ++p) {
-        for (size_t q = 0; q < thread_shape; ++q) {
-            sum[p][q] = 0.0;
+        for (size_t q = 0; q < thread_shape; q+=trans_size) {
+            FLOAT4(sum[p][q]) = float4{0.0};
         }
     }
 
     // 取第一部分
     unsigned smem_stage_idx = 0;
-    size_t bit = real_size == sizeof(float) ? 2 : 1;
     for (size_t i = tid << bit; i < block_shape * block_unit; i += blockDim.x << bit) {
         size_t j = i / block_unit, k = i % block_unit;
         // 安培之前的架构，从全局内存转移到共享内存会经过寄存器中转
