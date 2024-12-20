@@ -1,6 +1,11 @@
 #include "common.hpp"
 
-// 修改block排列为列优先
+// 利用读取 Shared Memory 时的广播机制，减少 Memory Transaction 的数量和延迟
+// 将Warp中的线程摆放成Z字形
+//   0   1   8   9  16  17  24  25
+//   2   3  10  11  18  19  26  27
+//   4   5  12  13  20  21  28  29
+//   6   7  14  15  22  23  30  31
 
 #define FLOAT4(pointer) (reinterpret_cast<float4 *>(&(pointer))[0])
 #define CFLOAT4(pointer) (reinterpret_cast<const float4 *>(&(pointer))[0])
@@ -9,16 +14,19 @@
 constexpr size_t block_shape = 128, block_unit = 8;
 // thread_shape应能整除block_shape和block_unit，thread_shape应是4的正整数倍
 constexpr size_t thread_shape = 8, block_dim = block_shape / thread_shape;
-// thread_unit应能整除block_unit
-constexpr size_t thread_unit = 1;
+// thread_unit应能整除block_unit，warp_n和warpSize/warp_n应能整除block_dim和warpSize
+constexpr size_t thread_unit = 1, warp_n = 8;
 
 __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
 {
-    unsigned tid = threadIdx.x, ty = tid / block_dim, tx = tid % block_dim;
+    unsigned tid = threadIdx.x, warp_line = block_dim * (warpSize / warp_n);
+    unsigned warp_line_y = tid / warp_line, warp_line_x = tid % warp_line;
+    unsigned warp_y = warp_line_x / warpSize, warp_x = warp_line_x % warpSize;
+    unsigned z_y = warp_x / 8, z_x = warp_x % 8;
+    unsigned ty = warp_line_y * (warpSize / warp_n) + z_x / 2;
+    unsigned tx = warp_y * warp_n + z_y * 2 + z_x % 2;
 
-    unsigned bid = blockIdx.x + blockIdx.y * gridDim.x;
-    unsigned bidy = bid / gridDim.y, bidx = bid % gridDim.y;
-    unsigned by = bidx * block_shape, bx = bidy * block_shape;
+    unsigned by = blockIdx.y * block_shape, bx = blockIdx.x * block_shape;
 
     __shared__ real s_a[2][block_unit][block_shape], s_b[2][block_unit][block_shape];
 

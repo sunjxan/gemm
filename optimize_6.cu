@@ -1,11 +1,6 @@
 #include "common.hpp"
 
-// 利用读取 Shared Memory 时的广播机制，减少 Memory Transaction 的数量和延迟
-// 将Warp中的线程摆放成Z字形
-//   0   1   8   9  16  17  24  25
-//   2   3  10  11  18  19  26  27
-//   4   5  12  13  20  21  28  29
-//   6   7  14  15  22  23  30  31
+// Warp 摆放为 4*8 thread 时计算访存比最高
 
 #define FLOAT4(pointer) (reinterpret_cast<float4 *>(&(pointer))[0])
 #define CFLOAT4(pointer) (reinterpret_cast<const float4 *>(&(pointer))[0])
@@ -22,9 +17,8 @@ __global__ void kernel(const real (*A)[K], const real (*B)[N], real (*C)[N])
     unsigned tid = threadIdx.x, warp_line = block_dim * (warpSize / warp_n);
     unsigned warp_line_y = tid / warp_line, warp_line_x = tid % warp_line;
     unsigned warp_y = warp_line_x / warpSize, warp_x = warp_line_x % warpSize;
-    unsigned z_y = warp_x / 8, z_x = warp_x % 8;
-    unsigned ty = warp_line_y * (warpSize / warp_n) + z_x / 2;
-    unsigned tx = warp_y * warp_n + z_y * 2 + z_x % 2;
+    unsigned ty = warp_line_y * (warpSize / warp_n) + warp_x / warp_n;
+    unsigned tx = warp_y * warp_n + warp_x % warp_n;
 
     unsigned by = blockIdx.y * block_shape, bx = blockIdx.x * block_shape;
 
